@@ -74,6 +74,87 @@ def get_weather_data(city: str) -> str:
         f"Weather: {data['current']['weather_descriptions'][0]}\n"
         f"Humidity: {data['current']['humidity']}%"
     )
+    
+# ==========================================
+# Calculator Tool
+# ==========================================
+
+import ast
+import operator
+
+
+# Supported mathematical operations
+OPERATORS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.Pow: operator.pow,
+    ast.Mod: operator.mod,
+    ast.USub: operator.neg,
+    ast.UAdd: operator.pos,
+}
+
+
+def evaluate_expression(node):
+    """Safely evaluate a mathematical expression."""
+
+    if isinstance(node, ast.Constant):
+        if isinstance(node.value, (int, float)):
+            return node.value
+        raise ValueError("Only numbers are allowed.")
+
+    if isinstance(node, ast.BinOp):
+        left = evaluate_expression(node.left)
+        right = evaluate_expression(node.right)
+
+        operation = OPERATORS.get(type(node.op))
+
+        if operation is None:
+            raise ValueError("Unsupported operator.")
+
+        return operation(left, right)
+
+    if isinstance(node, ast.UnaryOp):
+        operand = evaluate_expression(node.operand)
+
+        operation = OPERATORS.get(type(node.op))
+
+        if operation is None:
+            raise ValueError("Unsupported operator.")
+
+        return operation(operand)
+
+    raise ValueError("Invalid mathematical expression.")
+
+
+@tool
+def calculator(expression: str) -> str:
+    """
+    Calculate mathematical expressions.
+
+    Examples:
+    - 10 + 20
+    - 100 * 1.18
+    - (500 + 200) / 2
+    - 2 ** 10
+
+    Use this tool whenever an accurate numerical calculation is required.
+    """
+
+    try:
+        tree = ast.parse(expression, mode="eval")
+
+        result = evaluate_expression(tree.body)
+
+        return str(result)
+
+    except ZeroDivisionError:
+        return "Error: Cannot divide by zero."
+
+    except Exception as e:
+        return f"Calculation error: {str(e)}"
+
 
 
 # ==========================================
@@ -93,9 +174,9 @@ llm = ChatGroq(
 
 tools = [
     search_tool,
-    get_weather_data
+    get_weather_data,
+    calculator
 ]
-
 
 # ==========================================
 # CREATE AGENT
