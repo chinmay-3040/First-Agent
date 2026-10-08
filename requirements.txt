@@ -1,0 +1,10 @@
+langchain
+langchain-community
+langchain-groq
+langchain-tavily
+langchainhub
+langgraph
+requests
+python-dotenv
+streamlit
+certifi
